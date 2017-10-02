@@ -1,9 +1,5 @@
 #!/usr/bin/env python
 
-import logging
-import logging.handlers
-import argparse
-import sys
 import time  
 
 from AWSIoTPythonSDK.MQTTLib import AWSIoTMQTTShadowClient
@@ -11,42 +7,6 @@ import json
 import os
 import ssl
 import RPi.GPIO as GPIO
-
-# Deafults
-LOG_FILENAME = "/home/pi/DemoLedThing/log/Device.log"
-LOG_LEVEL = logging.INFO  # Could be e.g. "DEBUG" or "WARNING"
-
-
-parser = argparse.ArgumentParser(description="My simple Python service")
-parser.add_argument("-l", "--log", help="file to write log to (default '" + LOG_FILENAME + "')")
-
-args = parser.parse_args()
-if args.log:
-        LOG_FILENAME = args.log
-
-
-
-logger = logging.getLogger(__name__)
-logger.setLevel(LOG_LEVEL)
-handler = logging.handlers.TimedRotatingFileHandler(LOG_FILENAME, when="midnight", backupCount=3)
-formatter = logging.Formatter('%(asctime)s %(levelname)-8s %(message)s')
-handler.setFormatter(formatter)
-logger.addHandler(handler)
-
-
-class MyLogger(object):
-        def __init__(self, logger, level):
-                self.logger = logger
-                self.level = level
-
-        def write(self, message):
-                if message.rstrip() != "":
-                        self.logger.log(self.level, message.rstrip())
-
-
-sys.stdout = MyLogger(logger, logging.INFO)
-sys.stderr = MyLogger(logger, logging.ERROR)
-
 
 
 # These are my AWS IoT login and certificates
@@ -76,10 +36,10 @@ def IoT_to_Raspberry_Change_Led(ShadowPayload):
                                 } \
                             } \
                 }
-
+    
     if ShadowPayload in Led_Status:
 
-        if (ShadowPayload == "True"):
+        if (ShadowPayload == 'True'):
             
             GPIO.output(Base_Led_Power, GPIO.HIGH) 
             time.sleep(0.1)            
@@ -100,16 +60,16 @@ def IoT_to_Raspberry_Change_Led(ShadowPayload):
 # Shadow callback for when a DELTA is received (this happens when Lamda does set a DESIRED value in IoT)
 def IoTShadowCallback_Delta(payload, responseStatus, token):
     payloadDict = json.loads(payload)
-    if ("led" in payloadDict["state"]):
-        IoT_to_Raspberry_Change_Led(str(payloadDict["state"]["led"]))
+    if ("led" in payloadDict['state']):
+        IoT_to_Raspberry_Change_Led(str(payloadDict['state']['led']))
 
 
 
 # Shadow callback GET for setting initial status
 def IoTShadowCallback_Get(payload, responseStatus, token):
     payloadDict = json.loads(payload)
-    if ("led" in payloadDict["state"]["desired"]):
-        IoT_to_Raspberry_Change_Led(str(payloadDict["state"]["desired"]["led"]))
+    if ("led" in payloadDict['state']['desired']):
+        IoT_to_Raspberry_Change_Led(str(payloadDict['state']['desired']['led']))
 
 
 
